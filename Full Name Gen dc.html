@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3C Generator // Liquid Glass</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg: #050505;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent: #5865F2;
+            --accent-glow: rgba(88, 101, 242, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #8e9297;
+            --success: #57F287;
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ── BACKGROUND BLOBS (Liquid Effect) ── */
+        .blobs {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; overflow: hidden; filter: blur(80px);
+            opacity: 0.6;
+        }
+        .blob {
+            position: absolute; border-radius: 50%;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .blob-1 { background: #5865F2; width: 40vw; height: 40vw; top: -10%; left: -10%; }
+        .blob-2 { background: #eb459e; width: 35vw; height: 35vw; bottom: -10%; right: -10%; animation-delay: -5s; }
+        .blob-3 { background: #00d2ff; width: 30vw; height: 30vw; top: 40%; left: 40%; animation-delay: -10s; opacity: 0.5; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10vw, 10vh) scale(1.2); }
+        }
+
+        /* ── LAYOUT & GLASS ── */
+        .container {
+            max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem;
+            position: relative; z-index: 1;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* ── HEADER ── */
+        header {
+            text-align: center; padding: 4rem 0 2rem;
+            animation: fadeInDown 1s ease-out;
+        }
+        h1 {
+            font-size: 4rem; font-weight: 800; letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff, #8e9297);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle { color: var(--text-muted); font-size: 1.2rem; font-weight: 300; }
+
+        /* ── CONTROLS ── */
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: end; }
+        
+        .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        
+        select, input[type="text"] {
+            width: 100%; padding: 1rem;
+            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border);
+            border-radius: 12px; color: white; font-family: var(--font-main); font-size: 1rem;
+            outline: none; transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        select option { background: #111; color: white; }
+
+        /* ── 3D BUTTONS ── */
+        .btn-3d {
+            position: relative; padding: 1rem 2rem; border: none; border-radius: 12px;
+            background: linear-gradient(180deg, #6a76ff 0%, var(--accent) 100%);
+            color: white; font-family: var(--font-main); font-weight: 800; font-size: 1.1rem;
+            cursor: pointer; transition: all 0.1s ease;
+            box-shadow: 0 6px 0 #3a449e, 0 10px 20px rgba(0,0,0,0.3);
+            transform: translateY(-3px); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-3d:hover { transform: translateY(-5px); box-shadow: 0 8px 0 #3a449e, 0 15px 25px rgba(0,0,0,0.4); }
+        .btn-3d:active { transform: translateY(2px); box-shadow: 0 2px 0 #3a449e, 0 5px 10px rgba(0,0,0,0.3); }
+        
+        .btn-secondary {
+            background: linear-gradient(180deg, #2b2d31 0%, #1e1f22 100%);
+            box-shadow: 0 6px 0 #111214, 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .btn-secondary:hover { box-shadow: 0 8px 0 #111214, 0 15px 25px rgba(0,0,0,0.4); }
+        .btn-secondary:active { box-shadow: 0 2px 0 #111214, 0 5px 10px rgba(0,0,0,0.3); }
+
+        /* ── STATS ── */
+        .stats-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; padding: 0 1rem;
+            font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);
+        }
+        .stat-val { color: var(--success); font-weight: 700; }
+
+        /* ── RESULTS GRID ── */
+        .grid-container {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.8rem; max-height: 500px; overflow-y: auto; padding: 1rem;
+            background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid var(--glass-border);
+        }
+        /* Custom Scrollbar */
+        .grid-container::-webkit-scrollbar { width: 8px; }
+        .grid-container::-webkit-scrollbar-track { background: transparent; }
+        .grid-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        
+        .user-item {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.05);
+            padding: 0.8rem 0.5rem; border-radius: 8px; text-align: center;
+            font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s ease;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+        }
+        .user-item:hover { background: var(--accent-glow); border-color: var(--accent); transform: scale(1.1) translateY(-2px); box-shadow: 0 5px 15px var(--accent-glow); }
+        .user-item:active { transform: scale(0.95); }
+        
+        /* Rarity Glow */
+        .user-item.rare { border-color: rgba(87, 242, 135, 0.4); color: #a3ffc3; }
+        .user-item.epic { border-color: rgba(235, 69, 158, 0.4); color: #ff9bcb; box-shadow: inset 0 0 10px rgba(235, 69, 158, 0.1); }
+
+        /* ── WEBHOOK ── */
+        .webhook-section {
+            display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center;
+            margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--glass-border);
+        }
+        .webhook-section input { font-family: var(--font-mono); font-size: 0.9rem; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .webhook-section { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BACKGROUND ANIMATION -->
+    <div class="blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Username Generator</h1>
+            <div class="subtitle">High-speed combo generator // Liquid Glass UI</div>
+        </header>
+
+        <!-- CONTROL PANEL -->
+        <div class="glass-panel">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Longueur</label>
+                    <select id="lengthSelect">
+                        <option value="3">3 Caractères</option>
+                        <option value="4">4 Caractères</option>
+                        <option value="5">5 Caractères</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Quantité</label>
+                    <select id="amountSelect">
+                        <option value="1000">1 000</option>
+                        <option value="5000" selected>5 000</option>
+                        <option value="10000">10 000</option>
+                        <option value="25000">25 000</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Action</label>
+                    <button class="btn-3d" id="generateBtn">Générer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS PANEL -->
+        <div class="glass-panel">
+            <div class="stats-bar">
+                <span>Générés: <span class="stat-val" id="countDisplay">0</span></span>
+                <span>Statut: <span class="stat-val" id="statusDisplay">En attente</span></span>
+            </div>
+            <div class="grid-container" id="resultsGrid">
+                <!-- Items injected here -->
+            </div>
+            
+            <!-- WEBHOOK SECTION -->
+            <div class="webhook-section">
+                <input type="text" id="webhookUrl" placeholder="https://discord.com/api/webhooks/...">
+                <button class="btn-3d btn-secondary" id="copyBtn">Copier tout</button>
+                <button class="btn-3d" id="sendWebhookBtn">Send to Webhook</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─────────────────────────────────────────────
+        // CONFIG & STATE
+        // ─────────────────────────────────────────────
+        const CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789._';
+        const RARE_CHARS = 'zqxjkvw04789';
+        const COMMON_WORDS = ['the', 'and', 'lol', 'gg', 'admin', 'mod', 'bot', 'yes', 'no', 'you', 'discord', 'dev', 'pro', 'gamer'];
+        
+        let generatedList = [];
+        let isGenerating = false;
+
+        // DOM Elements
+        const lengthSelect = document.getElementById('lengthSelect');
+        const amountSelect = document.getElementById('amountSelect');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const sendWebhookBtn = document.getElementById('sendWebhookBtn');
+        const webhookUrlInput = document.getElementById('webhookUrl');
+        
+        const resultsGrid = document.getElementById('resultsGrid');
+        const countDisplay = document.getElementById('countDisplay');
+        const statusDisplay = document.getElementById('statusDisplay');
+
+        // ─────────────────────────────────────────────
+        // ALGORITHM
+        // ─────────────────────────────────────────────
+        
+        // Génère un string aléatoire basé sur la longueur
+        function generateString(length) {
+            let res = '';
+            for (let i = 0; i < length; i++) {
+                // Règle Discord: Pas de . ou _ au début/fin, pas de doubles
+                if (i === 0 || i === length - 1) {
+                    let c;
+                    do { c = CHARS[Math.floor(Math.random() * 36)]; } while (c === '.' || c === '_');
+                    res += c;
+                } else {
+                    let c = CHARS[Math.floor(Math.random() * CHARS.length)];
+                    // Éviter les doubles points/underscores
+                    if ((c === '.' && res.endsWith('.')) || (c === '_' && res.endsWith('_'))) {
+                        c = CHARS[Math.floor(Math.random() * 36)];
+                    }
+                    res += c;
+                }
+            }
+            return res;
+        }
+
+        // Score de rareté (0 à 100) - Plus c'est haut, plus c'est probable d'être libre
+        function calculateRarityScore(str) {
+            let score = 50;
+            
+            // Bonus pour les caractères rares
+            for (let char of str) {
+                if (RARE_CHARS.includes(char)) score += 8;
+                if (char === '.' || char === '_') score += 5; // Structuré = moins tapé
+            }
+            
+            // Pénalité pour les patterns évidents
+            for (let word of COMMON_WORDS) {
+                if (str.includes(word)) score -= 40;
+            }
+            
+            // Pénalité pour les répétitions (aaa, 111)
+            if (/(.)\1\1/.test(str)) score -= 30;
+            if (/(.)\1/.test(str)) score -= 10;
+
+            // Pénalité si entièrement alphabétique ou entièrement numérique
+            if (/^[a-z]+$/.test(str)) score -= 15;
+            if (/^[0-9]+$/.test(str)) score -= 10;
+
+            // Clamp entre 1 et 99
+            return Math.max(1, Math.min(99, score));
+        }
+
+        // ─────────────────────────────────────────────
+        // GENERATION ENGINE (Chunked for performance)
+        // ─────────────────────────────────────────────
+        async function generateUsernames() {
+            if (isGenerating) return;
+            isGenerating = true;
+            
+            const length = parseInt(lengthSelect.value);
+            const amount = parseInt(amountSelect.value);
+            
+            generatedList = [];
+            resultsGrid.innerHTML = '';
+            countDisplay.textContent = '0';
+            statusDisplay.textContent = 'Génération...';
+            generateBtn.textContent = 'En cours...';
+            
+            const chunkSize = 500; // Process par paquets pour ne pas freeze l'UI
+            let processed = 0;
+
+            return new Promise((resolve) => {
+                function processChunk() {
+                    const fragment = document.createDocumentFragment();
+                    
+                    for (let i = 0; i < chunkSize && processed < amount; i++) {
+                        const u = generateString(length);
+                        const score = calculateRarityScore(u);
+                        
+                        const item = { username: u, score: score };
+                        generatedList.push(item);
+
+                        // Création de l'élément DOM
+                        const div = document.createElement('div');
+                        div.className = 'user-item';
+                        if (score > 75) div.classList.add('epic');
+                        else if (score > 60) div.classList.add('rare');
+                        
+                        div.textContent = u;
+                        div.title = `Score: ${score}/100`;
+                        div.onclick = () => {
+                            navigator.clipboard.writeText(u);
+                            const originalText = div.textContent;
+                            div.textContent = 'Copié !';
+                            div.style.color = 'var(--success)';
+                            setTimeout(() => {
+                                div.textContent = originalText;
+                                div.style.color = '';
+                            }, 800);
+                        };
+                        
+                        fragment.appendChild(div);
+                        processed++;
+                    }
+                    
+                    resultsGrid.appendChild(fragment);
+                    countDisplay.textContent = processed.toLocaleString();
+                    
+                    if (processed < amount) {
+                        // Continuer au prochain frame
+                        requestAnimationFrame(processChunk);
+                    } else {
+                        isGenerating = false;
+                        statusDisplay.textContent = 'Terminé';
+                        generateBtn.textContent = 'Générer';
+                        resolve();
+                    }
+                }
+                
+                requestAnimationFrame(processChunk);
+            });
+        }
+
+        // ─────────────────────────────────────────────
+        // WEBHOOK LOGIC
+        // ─────────────────────────────────────────────
+        async function sendToWebhook() {
+            const url = webhookUrlInput.value.trim();
+            if (!url || !url.startsWith('https://discord.com/api/webhooks/')) {
+                alert('Veuillez entrer une URL de Webhook Discord valide.');
+                return;
+            }
+            if (generatedList.length === 0) {
+                alert('Générez des usernames d\'abord.');
+                return;
+            }
+
+            statusDisplay.textContent = 'Envoi...';
+            sendWebhookBtn.textContent = 'Envoi...';
+
+            // Trier par score décroissant et prendre le TOP 50
+            const topUsernames = [...generatedList]
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 50);
+
+            // Découper en paquets de 10 (max par embed discord)
+            const chunks = [];
+            for (let i = 0; i < topUsernames.length; i += 10) {
+                chunks.push(topUsernames.slice(i, i + 10));
+            }
+
+            try {
+                for (let i = 0; i < chunks.length; i++) {
+                    const chunk = chunks[i];
+                    
+                    // Formater en une seule string pour l'embed
+                    const textList = chunk.map(item => `\`${item.username}\` (Score: ${item.score})`).join('\n');
+                    
+                    const payload = {
+                        embeds: [{
+                            title: `🔥 Top Usernames Générés (Partie ${i + 1}/${chunks.length})`,
+                            description: textList,
+                            color: 0x5865F2,
+                            footer: { text: `Généré avec Username Generator` },
+                            timestamp: new Date().toISOString()
+                        }]
+                    };
+
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.status === 429) {
+                        const data = await res.json();
+                        const waitTime = (data.retry_after * 1000) + 500;
+                        statusDisplay.textContent = `Rate limit, pause ${Math.ceil(waitTime/1000)}s...`;
+                        await new Promise(r => setTimeout(r, waitTime));
+                        i--; // Retry this chunk
+                        continue;
+                    }
+                    
+                    // Pause anti-spam entre les requêtes (1.5s)
+                    await new Promise(r => setTimeout(r, 1500));
+                }
+                
+                statusDisplay.textContent = 'Envoyé avec succès !';
+                setTimeout(() => { statusDisplay.textContent = 'En attente'; }, 3000);
+
+            } catch (error) {
+                console.error(error);
+                statusDisplay.textContent = 'Erreur d\'envoi';
+            } finally {
+                sendWebhookBtn.textContent = 'Send to Webhook';
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        // EVENT LISTENERS
+        // ─────────────────────────────────────────────
+        generateBtn.addEventListener('click', generateUsernames);
+        
+        copyBtn.addEventListener('click', () => {
+            if (generatedList.length === 0) return;
+            const text = generatedList.map(i => i.username).join('\n');
+            navigator.clipboard.writeText(text);
+            const original = copyBtn.textContent;
+            copyBtn.textContent = 'Copié !';
+            setTimeout(() => { copyBtn.textContent = original; }, 1500);
+        });
+        
+        sendWebhookBtn.addEventListener('click', sendToWebhook);
+
+        // Générer un petit batch au chargement pour l'esthétique
+        window.addEventListener('load', () => {
+            amountSelect.value = '1000';
+            generateUsernames();
+        });
+
+    </script>
+</body>
+</html>
